@@ -1,0 +1,224 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="Mikawa"><title>Elastic Search集群存储和索引搜索原理简介 · Mikawa Blog</title><meta name="description" content="本文将从 ElasticSearch 的集群到索引内部，简单介绍一下 ES 的存储和搜索的实现原理，不会涉及具体的搜索语句实现和搜索技巧。本文主要分为四个部分，首先简要介绍 ES 的基本概念，然后从大到小，介绍 ES 集群的概念和分片在集群中的存储方式，每一个索引在内存和磁盘的存储过程，最后简单介绍"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta id="site_root_url" data="/"><meta id="default-theme" data="light"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/maple_icon.png"><link rel="stylesheet" href="/css/theme/light.css"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/url_for.js"></script><script src="/js/friends-link-generator.js"></script><script src="/js/jquery.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/site.js"></script><script src="/js/router.js"></script><script src="/js/darkLightToggle.js"></script><script src="/js/add-bookmark.js"></script><link rel="stylesheet" href="/css/comments/gittalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>function loadComment(retry = 3) { 
+  const id = site.getThis()?.title || 'Elastic Search集群存储和索引搜索原理简介';
+  if (!id) {
+    if (retry > 0) {
+      setTimeout(() => loadComment(retry - 1), 1000);
+    }
+    return;
+  }
+  const gitalk = new Gitalk({
+    clientID: 'e9eddbf66d9a96e58b54',
+    clientSecret: '8b7efc72923b620323f00c416fdf0ef9b20e0814',
+    repo: 'xuh723.github.io',      // The repository of store comments,
+    owner: 'xuh723',
+    admin: ['xuh723'],
+    id,      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk_container')
+}
+</script><meta name="generator" content="Hexo 7.1.1"></head><body><main-outlet><div class="page-top animated"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/avatar.jpg"></div></div></div><div class="toc-mobile"><div class="toc-button"><span>目录</span></div><div class="toc-container in-page animated fadeInDown"><div class="toclist-container"><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#ES-%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D"><span class="toclist-text">ES 简单介绍</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%B8%B8%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toclist-text">常用场景</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%90%9C%E7%B4%A2%E8%BF%87%E7%A8%8B"><span class="toclist-text">搜索过程</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#ES-%E9%9B%86%E7%BE%A4%E5%8E%9F%E7%90%86"><span class="toclist-text">ES 集群原理</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E9%9B%86%E7%BE%A4%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toclist-text">集群基本概念</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E9%9B%86%E7%BE%A4%E5%8E%9F%E7%90%86"><span class="toclist-text">集群原理</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%88%86%E7%89%87%E6%93%8D%E4%BD%9C"><span class="toclist-text">分片操作</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E6%A1%A3%E5%AD%98%E5%82%A8"><span class="toclist-text">文档存储</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%B0%E5%BB%BA%E6%96%87%E6%A1%A3"><span class="toclist-text">新建文档</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E6%A1%A3%E6%A3%80%E7%B4%A2"><span class="toclist-text">文档检索</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E6%A1%A3%E5%8F%96%E5%9B%9E"><span class="toclist-text">文档取回</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#ES-%E7%B4%A2%E5%BC%95%E5%AD%98%E5%82%A8"><span class="toclist-text">ES 索引存储</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95"><span class="toclist-text">倒排索引</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E7%B4%A2%E5%BC%95%E6%9B%B4%E6%96%B0"><span class="toclist-text">索引更新</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E8%BF%91%E5%AE%9E%E6%97%B6%E6%90%9C%E7%B4%A2"><span class="toclist-text">近实时搜索</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%8C%81%E4%B9%85%E5%8C%96%E5%8F%98%E6%9B%B4"><span class="toclist-text">持久化变更</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%AE%B5%E5%90%88%E5%B9%B6"><span class="toclist-text">段合并</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%86%99%E5%85%A5%E6%B5%81%E7%A8%8B%E6%80%BB%E7%BB%93"><span class="toclist-text">写入流程总结</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#ES-%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86"><span class="toclist-text">ES 搜索原理</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E7%B4%A2%E5%BC%95%E7%BB%84%E6%88%90"><span class="toclist-text">索引组成</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%8E%8B%E7%BC%A9%E6%8A%80%E5%B7%A7"><span class="toclist-text">压缩技巧</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E8%81%94%E5%90%88%E6%90%9C%E7%B4%A2"><span class="toclist-text">联合搜索</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="toclist-text">参考文档</span></a></li></ol></div></div></div></div><div class="sidebar animated"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/avatar.jpg" style="width:220px;" alt="favicon"><h3 title=""><a href="/">Mikawa Blog</a></h3><div class="description"><p>Best Wishes!</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/Xuh723"><i class="fa fa-github"></i></a></li></ul></div><div class="toc-container in-sidebar animated fadeInDown"><details class="ltr" open><summary>目录</summary><div class="toclist-container"><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#ES-%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D"><span class="toclist-text">ES 简单介绍</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%B8%B8%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toclist-text">常用场景</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%90%9C%E7%B4%A2%E8%BF%87%E7%A8%8B"><span class="toclist-text">搜索过程</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#ES-%E9%9B%86%E7%BE%A4%E5%8E%9F%E7%90%86"><span class="toclist-text">ES 集群原理</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E9%9B%86%E7%BE%A4%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toclist-text">集群基本概念</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E9%9B%86%E7%BE%A4%E5%8E%9F%E7%90%86"><span class="toclist-text">集群原理</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%88%86%E7%89%87%E6%93%8D%E4%BD%9C"><span class="toclist-text">分片操作</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E6%A1%A3%E5%AD%98%E5%82%A8"><span class="toclist-text">文档存储</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%B0%E5%BB%BA%E6%96%87%E6%A1%A3"><span class="toclist-text">新建文档</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E6%A1%A3%E6%A3%80%E7%B4%A2"><span class="toclist-text">文档检索</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E6%A1%A3%E5%8F%96%E5%9B%9E"><span class="toclist-text">文档取回</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#ES-%E7%B4%A2%E5%BC%95%E5%AD%98%E5%82%A8"><span class="toclist-text">ES 索引存储</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95"><span class="toclist-text">倒排索引</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E7%B4%A2%E5%BC%95%E6%9B%B4%E6%96%B0"><span class="toclist-text">索引更新</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E8%BF%91%E5%AE%9E%E6%97%B6%E6%90%9C%E7%B4%A2"><span class="toclist-text">近实时搜索</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%8C%81%E4%B9%85%E5%8C%96%E5%8F%98%E6%9B%B4"><span class="toclist-text">持久化变更</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%AE%B5%E5%90%88%E5%B9%B6"><span class="toclist-text">段合并</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%86%99%E5%85%A5%E6%B5%81%E7%A8%8B%E6%80%BB%E7%BB%93"><span class="toclist-text">写入流程总结</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#ES-%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86"><span class="toclist-text">ES 搜索原理</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E7%B4%A2%E5%BC%95%E7%BB%84%E6%88%90"><span class="toclist-text">索引组成</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%8E%8B%E7%BC%A9%E6%8A%80%E5%B7%A7"><span class="toclist-text">压缩技巧</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E8%81%94%E5%90%88%E6%90%9C%E7%B4%A2"><span class="toclist-text">联合搜索</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="toclist-text">参考文档</span></a></li></ol></div></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-4.0 </span><i class="fa fa-star"></i><span> Mikawa</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main animated fadeInDown"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated"><div class="post-title"><h3><a>Elastic Search集群存储和索引搜索原理简介</a></h3></div><div class="post-content"><p><p>本文将从 ElasticSearch 的集群到索引内部，简单介绍一下 ES 的存储和搜索的实现原理，不会涉及具体的搜索语句实现和搜索技巧。<br>本文主要分为四个部分，首先简要介绍 ES 的基本概念，然后从大到小，介绍 ES 集群的概念和分片在集群中的存储方式，每一个索引在内存和磁盘的存储过程，最后简单介绍一下 ES 如何通过索引快速检索对应的文档。</p>
+<p>部分图片和内容来自 ElasticSearch 官方文档和相关博客，参考资料已经列在文章最下方。</p>
+<h2 id="ES-简单介绍"><a href="#ES-简单介绍" class="headerlink" title="ES 简单介绍"></a>ES 简单介绍</h2><p>Elasticsearch（简称 ES）是一个分布式、可扩展、开源的全文搜索与数据分析引擎。ES 支持近乎实时的大量数据存储、搜索和分析。ES 不仅仅只是全文搜索，还支持结构化搜索、数据分析、复杂的语言处理、地理位置和对象间关联关系等。</p>
+<p>ES 的特点：</p>
+<ul>
+<li>一个分布式的实时文档存储引擎，每个字段都可以被索引与搜索</li>
+<li>一个分布式实时分析搜索引擎，支持各种查询和聚合操作</li>
+<li>能胜任上百个服务节点的扩展，并可以支持 PB 级别的结构化或者非结构化数据</li>
+</ul>
+<h3 id="常用场景"><a href="#常用场景" class="headerlink" title="常用场景"></a>常用场景</h3><ul>
+<li><p>搜索引擎<br>例如电商商店的商品搜索，站内搜索，模糊查询和全文检索等服务。</p>
+</li>
+<li><p>非关系型数据库<br>例如应用 ES 来实现业务宽表，优化原本冗余的数据库查询。</p>
+</li>
+<li><p>大数据近实时分析引擎<br>存储大数据，并做到近实时的分析。</p>
+</li>
+<li><p>日志系统<br>例如 ELK，通过收集日志文件存储到 ES，实现快速高效的日志检索。</p>
+</li>
+</ul>
+<h3 id="搜索过程"><a href="#搜索过程" class="headerlink" title="搜索过程"></a>搜索过程</h3><p>ES 的搜索过程主要分为四大步骤。</p>
+<ol>
+<li>查询分析<br>用自然语言处理输入的文本，进行纠错和标准化，例如去除大小写差异，修改复数形式；</li>
+<li>分词技术<br>对用户输入的查询文本分词，分成多个关键词；</li>
+<li>关键词检索<br>提交关键词之后在索引中进行检索；</li>
+<li>搜索排序<br>根据相关度排序检索结果输出；</li>
+</ol>
+<h2 id="ES-集群原理"><a href="#ES-集群原理" class="headerlink" title="ES 集群原理"></a>ES 集群原理</h2><h3 id="集群基本概念"><a href="#集群基本概念" class="headerlink" title="集群基本概念"></a>集群基本概念</h3><ul>
+<li>近实时<br>文档被索引和文档可被检索之间仅有短暂延迟（约 1 s）</li>
+<li>集群<br>一或多个共同存储数据、提供索引和搜索能力的节点的集合</li>
+<li>节点<br>集群的每个服务器，参与存储索引和提供搜索能力</li>
+<li>索引<br>一系列拥有相似特征的文档的集合</li>
+<li>文档<br>可被索引的基础信息单元</li>
+<li>分片和复制<br>索引可以分片存储，也可以指定分片备份的数量</li>
+</ul>
+<h3 id="集群原理"><a href="#集群原理" class="headerlink" title="集群原理"></a>集群原理</h3><p>索引是保存相关数据的地方，实际上是指向一个或者多个物理分片的逻辑命名空间。<br>分片是一个底层的工作单元，一个分片是一个 Lucene 的实例，它本身就是一个完整的 Lucene 索引。</p>
+<p>一个分片可以是主分片或者副本分片，在索引建立时就已经确定了主分片数，但是副本分片数可以随时修改。<br>索引内任意一个文档都归属于一个主分片，所以主分片的数目决定着索引能够保存的最大数据量。<br>一个副本分片只是一个主分片的拷贝，副本分片作为硬件故障时保护数据不丢失的冗余备份，并为搜索和返回文档等读操作提供服务。</p>
+<p>图中展示了一个包含 3 个节点的集群，有三个主分片 <code>p0, p1, p2</code>，每个主分片都包含两个副本分片。在增加新的分片的时候，ES 会分散节点的负载，重新分配分片所在的节点。分片的分配原则是副本分片和主分片一定不在一个节点中，如果只有一个节点，那就不会保存副本分片，此时集群的健康状态也会标记成 yellow。</p>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es1.png" alt="图片"></p>
+<h3 id="分片操作"><a href="#分片操作" class="headerlink" title="分片操作"></a>分片操作</h3><ul>
+<li>添加分片</li>
+</ul>
+<p>例如我们添加三个主分片，每个主分片有一个备份分片到只包含一个节点的集群。</p>
+<p>由于此时集群中只有一个节点，因此三个主分片都会被添加到这个节点中，而备份分片不能和主分片放在同一个节点，因此没有地方放置备份分片，当前集群仅包含一个包含 3 个主分片的节点，集群的健康状态为 yellow。</p>
+<ul>
+<li>扩展集群</li>
+</ul>
+<p>我们向集群中添加一个节点，此时可以添加备份了，因此新的节点中将包含三个主分片各自的备份分片。</p>
+<ul>
+<li>扩容节点</li>
+</ul>
+<p>如果我们继续向集群中添加节点进行扩容，那么 ES 还会重新排列分片所在的节点，分散节点的负载，当然还是会保证主节点和备份节点不在同一个节点上。</p>
+<ul>
+<li>调整备份分片数</li>
+</ul>
+<p>我们设置每个主节点拥有两个备份分片，此时每个主节点都有两个备份分片，填充到其他的节点中。</p>
+<ul>
+<li>出现故障</li>
+</ul>
+<p>例如节点 1 被关闭，ES 会重新选举一个主节点，并将已经不存在的主分片的备份分片升级为主分片，保证集群能够正常工作。<br>但是上面已经设定每个主分片要有两个备份分片了，而此时每个主分片仅剩下一个备份分片，因此集群的健康状态变为 yellow。</p>
+<h3 id="文档存储"><a href="#文档存储" class="headerlink" title="文档存储"></a>文档存储</h3><p>决定文档会存储到哪个分片是由文档路由公式计算得出的。文档路由公式可以简单理解为一个哈希函数，根据文档的 id 计算文档应该存储到哪个分片中。</p>
+<p>$shard &#x3D; hash(routing) % number_of_primary_shards$</p>
+<p>公式中 <code>routing</code> 一般指的是文档 id，经过哈希函数计算出一个数字，然后取模分片总数来决定存储到哪个分片。<br>注意上面已经说过，主分片的数目在创建索引的时候就已经确定了，所以不会产生新增主分片导致的 rehash 问题。</p>
+<h3 id="新建文档"><a href="#新建文档" class="headerlink" title="新建文档"></a>新建文档</h3><p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es2.png" alt="图片"></p>
+<p>如图所示，其中 <code>node1</code> 节点被标记成了 <code>master</code> 节点。</p>
+<p>在 ES 中，<code>master</code> 节点负责管理集群的状态和调度，以及保存和更新集群的一些元数据信息，之后会同步到所有节点，所以集群中每个节点都需要保存全量的元数据信息。<br><code>master</code> 节点仅仅负责集群和索引状态的管理，查询和存储都不用经过这个 <code>master</code> 节点。<br>除此之外，还有负责调度的 <code>client</code> 节点，以及存储数据的 <code>data</code> 节点这两种集群节点角色，在此处不做明显区分。</p>
+<p>元数据信息主要包含以下几种：</p>
+<ul>
+<li>集群的配置信息</li>
+<li>集群的节点信息</li>
+<li>模板 template 设置</li>
+<li>索引以及对应的设置，mapping、分词器和别名</li>
+<li>索引关联到的分片以及分配到的新节点</li>
+</ul>
+<p>新建文档的步骤可以大致分为三步。</p>
+<ol>
+<li>客户端向 <code>node1</code> 发送新建、索引或者删除请求；</li>
+<li>节点通过文档 <code>_id</code> 和路由公式计算出文档属于哪一个分片，假设属于 <code>p0</code>，那么请求会被转发到 <code>node3</code>，因为 <code>p0</code> 的主分片目前分配在 <code>node3</code> 上；</li>
+<li><code>node3</code> 在主分片上面执行请求，如果成功了，它将请求并行转发到 <code>node1</code> 和 <code>node2</code> 的备份分片上，一旦所有的备份分片都报告成功，那么 <code>node3</code> 将向协调节点报告成功，协调节点向客户端报告成功；</li>
+</ol>
+<p>在客户端收到成功响应的时候，文档变更已经在主分片和所有副本分片执行完成了，因此该变更是安全的。</p>
+<h3 id="文档检索"><a href="#文档检索" class="headerlink" title="文档检索"></a>文档检索</h3><p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es3.png" alt="图片"></p>
+<p>文档的查询阶段包含三个步骤：</p>
+<ol>
+<li>客户端发送一个查询请求到 <code>node3</code>，<code>node3</code> 会创建一个大小为 <code>from+size</code> 的空优先队列（此处 <code>from+size</code> 来自查询请求）；</li>
+<li><code>node3</code> 将查询请求转发到索引的每个主分片或备份分片中，每个分片在本地执行查询并添加结果到 <code>from+size</code> 的本地有序优先队列；</li>
+<li>每个分片返回各自优先队列的所有文档 id 和排序值（ES 计算的查询的 <code>score</code>）给协调节点，协调节点合并这些值到自己的优先队列，产生全局排序后的结果；</li>
+</ol>
+<p>上述先查后取的过程支持用 <code>from</code> 和 <code>size</code> 参数分页，但是显然，如果参数过大会有 <code>深分页</code> 的问题。<br>传递信息给协调节点的每个分片都必须先创建一个长度为 <code>from+size</code> 的 ui 咧，协调节点会得到 <code>numbser_of_shards*(from+size)</code> 长度的队列，并要根据这个队列来找到 <code>size</code> 限制的文档。</p>
+<p>es 中会通过 <code>scroll</code> 来缓存查询的结果，在一定程度上减少深分页的影响。</p>
+<h3 id="文档取回"><a href="#文档取回" class="headerlink" title="文档取回"></a>文档取回</h3><p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es4.png" alt="图片"></p>
+<p>文档检索的过程仅仅是获得了要返回的文档的 id，然后还需要执行文档取回的过程将文档返回给客户端。</p>
+<p>分布式取回阶段由以下四个步骤组成：</p>
+<ol>
+<li>协调节点辨别出哪些文档需要被取回并向相关的分片提交多个 GET 请求。</li>
+<li>每个分片加载文档，如果有需要的话，接着返回文档给协调节点。</li>
+<li>一旦所有的文档都被取回了，协调节点返回结果给客户端。</li>
+<li>协调节点首先决定哪些文档“确实”需要被取回。例如，如果我们的查询指定了 { “from”: 90, “size”: 10 } ，最初的 90 个结果会被丢弃，只有从第 91 个开始的 10 个结果需要被取回。这些文档可能来自和最初搜索请求有关的一个、多个甚至全部分片。</li>
+</ol>
+<h2 id="ES-索引存储"><a href="#ES-索引存储" class="headerlink" title="ES 索引存储"></a>ES 索引存储</h2><h3 id="倒排索引"><a href="#倒排索引" class="headerlink" title="倒排索引"></a>倒排索引</h3><p>分片和索引的关系：ES 的索引是分片的集合；分片是一个 Lucene 倒排索引，</p>
+<ul>
+<li>倒排索引</li>
+</ul>
+<p>和倒排索引相对的就是正排索引，也就是传统数据库中，存储文档和文档内容的关系。每个文档有一个文档 id 作为一行，后面列出了文档包含的所有单词。<br>这种存储方式无法应对全文检索的场景。文本字段中的每个单词需要被搜索，例如要查询包含“人工”的文档，对数据库意味着需要单个字段有索引多值的能力。<br>Elasticsearch 是通过 Lucene 的倒排索引技术实现比关系型数据库更快的过滤。特别是它对多条件的过滤支持非常好。<br>倒排索引就是对于每一个词项，存储它出现过的文档 id。例如某个文档出现了“人工智能”这一条。其中“人工”这个词项出现在了文档 1，2，3 中，所以倒排索引中就会记录 <code>人工| 1，2，3</code>。</p>
+<ul>
+<li>不变性</li>
+</ul>
+<p>在 ES 中，倒排索引具有不变性，也就是倒排索引被写入后是不可改变的。</p>
+<p>选择不更改倒排索引是因为不变性具有很多优点：</p>
+<ul>
+<li>不需要锁。如果你从来不更新索引，你就不需要担心多进程同时修改数据的问题。</li>
+<li>一旦索引被读入内核的文件系统缓存，便会留在哪里，由于其不变性。只要文件系统缓存中还有足够的空间，那么大部分读请求会直接请求内存，而不会命中磁盘。这提供了很大的性能提升。</li>
+<li>其它缓存 (像 filter 缓存)，在索引的生命周期内始终有效。它们不需要在每次数据改变时被重建，因为数据不会变化。</li>
+<li>写入单个大的倒排索引允许数据被压缩，减少磁盘 I&#x2F;O 和需要被缓存到内存的索引的使用量。</li>
+</ul>
+<p>自然，不变性也导致了一些缺点，最大的缺点就是无法修改。<br>当我们需要向索引中新增文档时，只能重建整个索引，这就限制了索引包含的文档数量，或者是索引可被更新的频率。</p>
+<h3 id="索引更新"><a href="#索引更新" class="headerlink" title="索引更新"></a>索引更新</h3><p>如何在保证倒排索引不变性的情况下更新索引？ES 选择建立更多的索引。</p>
+<p>ES 提出了按段搜索的概念，每一个段都是一个倒排索引，提交点（commit point）列出了目前所有已知的段。<br>在搜索的时候，所有已知的段都会被检索，最后会进行合并。</p>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es5.png" alt="图片"></p>
+<p>新增文档时，新文档被收集到内存索引缓存，随后被提交。</p>
+<ul>
+<li>一个新的段（即追加的倒排索引）被写入磁盘。</li>
+<li>一个新的包含段名字的提交点被写入磁盘。</li>
+<li>磁盘进行同步 — 所有在文件系统缓存中等待的写入都刷新到磁盘，以确保它们被写入物理文件。</li>
+<li>新的段被开启，让它包含的文档可见以被搜索。</li>
+<li>内存缓存被清空，等待接收新的文档。</li>
+</ul>
+<p>删除更新时，并不会真正删除，而是在提交点的 <code>.del</code> 文件中被标记为删除。后续在段合并的时候才会被真正删除。</p>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es6.png" alt="图片"></p>
+<h3 id="近实时搜索"><a href="#近实时搜索" class="headerlink" title="近实时搜索"></a>近实时搜索</h3><p>按照上述所说的更新索引的方式，一个新的文档需要在写入磁盘后才可以被搜索到，这导致 <code>fsync</code> 成为了新增文档和可被检索之间的性能瓶颈。<br>为了降低新增文档和可被检索之间的延迟，实现近实时的搜索，ES 将新的段写入文件系统缓存来使新的段可被搜索（每秒一次）。<br>之所以我们说 ES 的搜索是近实时搜索，有 1 s 左右的延迟，就是因为 ES 每秒一次将新的段写入缓存。</p>
+<p>如果所示，Lucene 允许新段在写入提交点之前就可以打开，使其包含的文档在未进行一次完整提交时便对搜索可见。<br>这种方式比进行一次提交代价要小得多，并且在不影响性能的前提下可以被频繁地执行。</p>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es7.png" alt="图片"></p>
+<h3 id="持久化变更"><a href="#持久化变更" class="headerlink" title="持久化变更"></a>持久化变更</h3><p>为了实现近实时搜索，ES <code>每秒将段写入缓存而不是写入磁盘，那么就可能产生数据丢失的问题。</code><br>为保证在断电等情况发生的时候也不会丢失数据，ES 增加了持久化日志（<code>translog</code>）。</p>
+<ol>
+<li>一个文档被索引之后，就会被添加到内存缓冲区，并且追加到 <code>translog</code>；</li>
+<li>分片每秒被 <code>refresh</code> 一次（写入缓存，可被搜索，没有写入磁盘）。<br>此时，这些在内存缓冲区的文档被写入到一个新的段中，且没有进行 fsync 操作。这个段被打开，使其可被搜索。内存缓冲区被清空。</li>
+<li>每隔一段时间———例如 <code>translog</code> 变得越来越大，索引被刷新（<code>flush</code>）, <code>flush</code> 操作往往是异步的。；<br>所有在内存缓冲区的文档都被写入一个新的段。缓冲区被清空。一个提交点被写入硬盘。文件系统缓存通过 <code>fsync</code> 被刷新（<code>flush</code>）。<br>老的 <code>translog</code> 被删除。</li>
+<li>一个新的 <code>translog</code> 被创建，并且一个全量提交被执行。</li>
+</ol>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es8.png" alt="图片"></p>
+<h3 id="段合并"><a href="#段合并" class="headerlink" title="段合并"></a>段合并</h3><p>由于自动刷新流程每秒会创建一个新的段，这样会导致短时间内的段数量暴增。</p>
+<p>段数目太多会带来较大的麻烦：<br>每一个段都会消耗文件句柄、内存和 cpu 运行周期；<br>更重要的是，每个搜索请求都必须轮流检查每个段，所以段越多，搜索也就越慢。</p>
+<p>Elasticsearch 通过在后台进行段合并来解决这个问题。小的段被合并到大的段，然后这些大的段再被合并到更大的段。<br>段合并的过程在搜索时会自动执行。老的段会被删除。同时，之前所说的需要被删除的文档，即带有 <code>.del</code> 标记的文档会被丢弃。</p>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es9.png" alt="图片"><br><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es10.png" alt="图片"></p>
+<h3 id="写入流程总结"><a href="#写入流程总结" class="headerlink" title="写入流程总结"></a>写入流程总结</h3><p>综合以上种种写入方式和技巧，总结一下 ElasticSearch 的写入过程如下：</p>
+<ol>
+<li>数据写入内存 buffer 和 translog 文件；</li>
+<li>Buffer 满或过一段时间（1 s），ES 将内存 refresh 到段文件，存储到系统内存中，并清空 buffer。此时文档可被检索；</li>
+<li>重复 1-2 步，直到 translog 文件较大或一段时间后，执行 commit；<br>Commit 分成几步：<ul>
+<li>Refresh，清空 buffer；</li>
+<li>写入 commit point，记录已提交的段文件；</li>
+<li>Fsync，持久化存储到磁盘；</li>
+<li>删除旧的 translog；</li>
+</ul>
+</li>
+<li>Merge：<ul>
+<li>磁盘中读出小的段，与内存中的段进行合并；</li>
+<li>生成新的段，commit 时写入磁盘；</li>
+<li>创建新的 commit point，去掉旧的段；</li>
+<li>删除磁盘中旧的段文件；</li>
+</ul>
+</li>
+</ol>
+<h2 id="ES-搜索原理"><a href="#ES-搜索原理" class="headerlink" title="ES 搜索原理"></a>ES 搜索原理</h2><h3 id="索引组成"><a href="#索引组成" class="headerlink" title="索引组成"></a>索引组成</h3><p>ES 的索引可以分成三个部分。</p>
+<ul>
+<li>Posting List<br>所有符合 term（查询条件）的文档 id；</li>
+<li>Term Dictionary<br>Term 按顺序排列的组合，分 block 保存，每个 block 按前缀压缩;</li>
+<li>Term Index<br>Term 的前缀部分，是一颗前缀树，并通过 FST 进行压缩，全部存在内存中;</li>
+</ul>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es11.png" alt="图片"></p>
+<p>经过压缩之后能够全部存储在内存中，检索文档的效率就很高了。<br>之所以说 ES 的检索效率比 MySQL 快，就是因为 Mysql 只有 <code>term dictionary</code> 这一层，是以 B+树排序的方式存储在磁盘上的。<br>在 MySQL 中检索一个 term 需要若干次的随机访问操作。而 Lucene 在 <code>term dictionary</code> 的基础上添加了 <code>term index</code> 来加速检索。<br><code>term index</code> 以 Trie 树的形式缓存在内存中，并通过有限状态转换器进行压缩，可以在 $O(1)$ 查找。</p>
+<h3 id="压缩技巧"><a href="#压缩技巧" class="headerlink" title="压缩技巧"></a>压缩技巧</h3><ul>
+<li>Frame of Reference 编码</li>
+</ul>
+<p>对于频繁出现的词条（如性别）可以极大减少磁盘占用，主要分成三步：</p>
+<ol>
+<li>Posting list 差分编码；</li>
+<li>分块；</li>
+<li>按位压缩；</li>
+</ol>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es12.png" alt="图片"></p>
+<ul>
+<li>Roaring Bitmap</li>
+</ul>
+<ol>
+<li>对每个文档 id 计算两个值：(id&#x2F;65536, id%65536)；</li>
+<li>根据第一个值进行分块；</li>
+<li>每个块根据是否大于 4096，编码成 bitmap 或者单纯的数组；</li>
+</ol>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es13.png" alt="图片"></p>
+<h3 id="联合搜索"><a href="#联合搜索" class="headerlink" title="联合搜索"></a>联合搜索</h3><p>联合搜索就是将多个 <code>term</code> 查询得到的 <code>posting list</code> 进行合并。<br>直接遍历进行合并的效率比较低，为了提高合并的效率，ES 采用了跳表的方式来加速合并。</p>
+<ul>
+<li>跳表</li>
+</ul>
+<p>跳表（skip list）的设计初衷是作为替换平衡树的一种选择。<br>因此可以理解成与红黑树类似，一种可以快速实现查询、插入、更新、删除的数据结构。<br>在并发环境下更新操作更加高效，同时原理比红黑树简单。</p>
+<p>跳表就是在普通单向链表的基础上增加了一些索引，而且这些索引是分层的，从而可以快速地查的到数据。</p>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es14.png" alt="图片"></p>
+<ul>
+<li>合并过程</li>
+</ul>
+<p><img src="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/es15.png" alt="图片"></p>
+<p>首先，遍历第一个 <code>posting list</code>，第一个节点为 2；<br>去第二个 <code>posting list</code> 中查找 2，没有就找更大的，找到 13；<br>返回第一个 <code>posting list</code>，查找 13，找到了；<br>查找第二个 <code>posting list</code>，已经是 13；<br>查找第三个 <code>posting list</code>，找到了 13，所有都找到了，记录；<br>遍历第一个列表的下一个，是 17；<br>第二个列表查询，没有，找到更大的 22；<br>返回第一个列表，查询 22，没有，找到更大的 98；<br>去第二个列表查询 98……</p>
+<p>依次类推，最后得到查询的结果 [13, 98]。</p>
+<p>在遍历的过程中跳过了一部分节点，因此速度很快，分块也可以用上 <code>Frame of Reference</code> 编码进行压缩。</p>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/index.html">ES官方文档</a><br><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html">ES权威指南</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/52b92f1a9c47">理解Elasticsearch工作原理</a><br><a target="_blank" rel="noopener" href="https://www.infoq.cn/article/database-timestamp-02/?utm_source=infoq&utm_medium=related_content_link&utm_campaign=relatedContent_articles_clk">时间序列数据库的秘密——索引</a><br><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/33674267">跳表原理</a><br><a target="_blank" rel="noopener" href="http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=0708E9CD6D1511CE4671FBD5E8E76D33?doi=10.1.1.15.9072&rep=rep1&type=pdf">skip lists: a probabilistic alternative to balanced trees</a><br><a target="_blank" rel="noopener" href="https://www.elastic.co/cn/blog/frame-of-reference-and-roaring-bitmaps">编码方式的比较</a></p>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-4.0协议，转载请注明出处<br>作者: Mikawa</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2024-03-24</span><i class="fa fa-tag"></i><a class="tag" href="/tags/技术基础/" title="技术基础">技术基础 </a><i class="fa fa-tag"></i><a class="tag" href="/tags/数据存储/" title="数据存储">数据存储 </a><span class="leancloud_visitors"></span><span>大约5550个字, 18分钟30秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0AMikawa%20Blog%20%C2%B7%20Elastic%20Search%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B%0Ahttps://xuh723.github.io/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2024/03/30/Kafka%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D/" title="Kafka消息队列简单介绍">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2024/03/23/%E5%88%A9%E7%94%A8hexo%E6%90%AD%E5%BB%BAgithub%E5%8D%9A%E5%AE%A2/" title="利用hexo搭建github博客">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><script>loadComment();</script></div></div></div></div></main-outlet><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>

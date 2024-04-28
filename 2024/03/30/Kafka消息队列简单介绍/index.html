@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="Mikawa"><title>Kafka消息队列简单介绍 · Mikawa Blog</title><meta name="description" content="消息队列是业务中常用的一种组件，它在业务中主要用于三个功能：异步，削峰，解耦。
+异步是利用消息队列，把原本串行的流程改造成异步执行的流程。例如有些数据请求的处理和业务的主流程无关，或者需要延迟处理，业务就可以把相关数据丢进消息队列中，后续再从消息队列中取出消息来进行处理，不影响业务本身的主要逻辑。
+"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta id="site_root_url" data="/"><meta id="default-theme" data="light"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/maple_icon.png"><link rel="stylesheet" href="/css/theme/light.css"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/url_for.js"></script><script src="/js/friends-link-generator.js"></script><script src="/js/jquery.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/site.js"></script><script src="/js/router.js"></script><script src="/js/darkLightToggle.js"></script><script src="/js/add-bookmark.js"></script><link rel="stylesheet" href="/css/comments/gittalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>function loadComment(retry = 3) { 
+  const id = site.getThis()?.title || 'Kafka消息队列简单介绍';
+  if (!id) {
+    if (retry > 0) {
+      setTimeout(() => loadComment(retry - 1), 1000);
+    }
+    return;
+  }
+  const gitalk = new Gitalk({
+    clientID: 'e9eddbf66d9a96e58b54',
+    clientSecret: '8b7efc72923b620323f00c416fdf0ef9b20e0814',
+    repo: 'xuh723.github.io',      // The repository of store comments,
+    owner: 'xuh723',
+    admin: ['xuh723'],
+    id,      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk_container')
+}
+</script><meta name="generator" content="Hexo 7.1.1"></head><body><main-outlet><div class="page-top animated"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/avatar.jpg"></div></div></div><div class="toc-mobile"><div class="toc-button"><span>目录</span></div><div class="toc-container in-page animated fadeInDown"><div class="toclist-container"><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#Kafka-%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toclist-text">Kafka 的基本概念</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84"><span class="toclist-text">基本架构</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E4%B8%BB%E9%A2%98%E5%92%8C%E5%88%86%E5%8C%BA"><span class="toclist-text">主题和分区</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E6%A8%A1%E5%BC%8F"><span class="toclist-text">发布订阅模式</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#Kafka-%E7%9A%84%E6%B6%88%E6%81%AF%E7%89%B9%E6%80%A7"><span class="toclist-text">Kafka 的消息特性</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%B6%88%E6%81%AF%E4%B8%8D%E4%B8%A2%E5%A4%B1"><span class="toclist-text">消息不丢失</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%B6%88%E6%81%AF%E6%9C%89%E5%BA%8F%E6%80%A7"><span class="toclist-text">消息有序性</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%B6%88%E6%81%AF%E5%B9%82%E7%AD%89"><span class="toclist-text">消息幂等</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%B6%88%E6%81%AF%E7%A7%AF%E5%8E%8B%E7%9A%84%E5%A4%84%E7%90%86"><span class="toclist-text">消息积压的处理</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%BB%B6%E8%BF%9F%E9%98%9F%E5%88%97"><span class="toclist-text">延迟队列</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93"><span class="toclist-text">总结</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toclist-text">参考资料</span></a></li></ol></div></div></div></div><div class="sidebar animated"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/avatar.jpg" style="width:220px;" alt="favicon"><h3 title=""><a href="/">Mikawa Blog</a></h3><div class="description"><p>Best Wishes!</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/Xuh723"><i class="fa fa-github"></i></a></li></ul></div><div class="toc-container in-sidebar animated fadeInDown"><details class="ltr" open><summary>目录</summary><div class="toclist-container"><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#Kafka-%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toclist-text">Kafka 的基本概念</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84"><span class="toclist-text">基本架构</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E4%B8%BB%E9%A2%98%E5%92%8C%E5%88%86%E5%8C%BA"><span class="toclist-text">主题和分区</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E6%A8%A1%E5%BC%8F"><span class="toclist-text">发布订阅模式</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#Kafka-%E7%9A%84%E6%B6%88%E6%81%AF%E7%89%B9%E6%80%A7"><span class="toclist-text">Kafka 的消息特性</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%B6%88%E6%81%AF%E4%B8%8D%E4%B8%A2%E5%A4%B1"><span class="toclist-text">消息不丢失</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%B6%88%E6%81%AF%E6%9C%89%E5%BA%8F%E6%80%A7"><span class="toclist-text">消息有序性</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%B6%88%E6%81%AF%E5%B9%82%E7%AD%89"><span class="toclist-text">消息幂等</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%B6%88%E6%81%AF%E7%A7%AF%E5%8E%8B%E7%9A%84%E5%A4%84%E7%90%86"><span class="toclist-text">消息积压的处理</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%BB%B6%E8%BF%9F%E9%98%9F%E5%88%97"><span class="toclist-text">延迟队列</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93"><span class="toclist-text">总结</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toclist-text">参考资料</span></a></li></ol></div></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-4.0 </span><i class="fa fa-star"></i><span> Mikawa</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main animated fadeInDown"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated"><div class="post-title"><h3><a>Kafka消息队列简单介绍</a></h3></div><div class="post-content"><p><p>消息队列是业务中常用的一种组件，它在业务中主要用于三个功能：异步，削峰，解耦。</p>
+<p>异步是利用消息队列，把原本串行的流程改造成异步执行的流程。例如有些数据请求的处理和业务的主流程无关，或者需要延迟处理，业务就可以把相关数据丢进消息队列中，后续再从消息队列中取出消息来进行处理，不影响业务本身的主要逻辑。</p>
+<p>削峰是指通过消息队列将可能出现的请求量突增毛刺平稳处理。例如将请求都放入一个消息队列中，业务从消息队列中读取请求进行处理。当突然有大量请求同时到来时，这些请求还是都会被放入消息队列，业务依然可以平稳地从消息队列中取出请求，依次处理，避免业务被突增的大量请求耗尽资源，导致无法提供服务。</p>
+<p>解耦是利用消息队列进行通信，使两个不同的业务模块可以互相独立，不互相影响。例如需要记录业务操作日志的时候，主业务进行操作之后，可以将日志内容放入消息队列。日志系统不断读取消息队列的内容，根据主业务放入的内容生成日志并上传，这样主业务和日志系统就解耦了，不会因为某个业务出现问题影响到另一个业务。</p>
+<p>基本上消息队列都是用于异步、削峰、解耦这三大功能的，在业务中遇到类似的问题的时候，都可以利用消息队列来解决。</p>
+<h2 id="Kafka-的基本概念"><a href="#Kafka-的基本概念" class="headerlink" title="Kafka 的基本概念"></a>Kafka 的基本概念</h2><p>比较常用的消息队列组件就是 Kafka。Kafka 是一种分布式的消息系统，用于实现高可靠性、高吞吐量、低延迟的数据传输。</p>
+<h3 id="基本架构"><a href="#基本架构" class="headerlink" title="基本架构"></a>基本架构</h3><p>一个典型的 Kafka 体系架构包括若干生产者（Producer）、若干服务代理节点（Broker）、若干消费者（Consumer），以及一个 ZooKeeper 集群。</p>
+<p>Kafka 利用 ZooKeeper 进行集群元数据的管理和选举等操作，生产者将消息发送给 Broker，Broker 将收到的消息存储到磁盘中，消费中负责从 Broker 订阅并消费消息。</p>
+<h3 id="主题和分区"><a href="#主题和分区" class="headerlink" title="主题和分区"></a>主题和分区</h3><p>Kafka 还有主题（Topic）和分区（Partition）两个概念。</p>
+<p>Kafka 中的消息通过主题进行分类，每个消息在生产者发送的时候都要指定一个主题。一个主题可以分成多个分区。消息在追加到分区的时候会有一个偏移量（Offset），代表这个消息在分区的唯一标识。因此，Kafka 可以保证分区消息有序，但是不能保证主题有序。</p>
+<p>Kafka 的分区可以存储在不同的 Broker 上，同时还引入了副本（Replica）机制，通过增加副本数量提高容灾能力。副本可以分成 leader 副本和 follower 副本，生产者和消费者只与 leader 副本交互，follower 副本只负责消息同步，相对于 leader 副本有一定的延后。</p>
+<p>一个分区只有一个 leader，分区中的所有副本统称为 AR（Assigned Replicas），副本的同步是通过区分 ISR （In-Sync Replicas）和 OSR （Out-of-Sync Replicas）进行的。ISR 指的是和 leader 保持一定程度同步的副本，OSR 指的是和 leader 同步滞后过多的副本。理想情况是 AR&#x3D;ISR，OSR 为空。</p>
+<p>消费者只能消费 HW（High Watermark，高水位）以前的消息。一个分区集合的 HW 是由 ISR 集合中最小的 LEO（Log End Offset，代表下一条待写入消息的 offset）决定的。</p>
+<h3 id="发布订阅模式"><a href="#发布订阅模式" class="headerlink" title="发布订阅模式"></a>发布订阅模式</h3><p>Kafka 的消息消费模式，常用的是发布订阅模式。</p>
+<p>生产者是发布方，生产者将消息发送到指定 Topic，Kafka 选择合适 Partition 存储消息。</p>
+<p>消费者是订阅方，从指定 Topic 订阅消息，按照 Partition 顺序读取，并且保证 Partition 里面的顺序不变。</p>
+<p>消费者会组成一个消费组的逻辑概念。一个分区的消息只能被同一个消费组的消费者消费。同一个消费组内的消费者，每个消费者可以选择一至多个分区进行消费，但是一个消费组中最多只能有分区数量个消费者，多余的消费者无法分配到分区，会被闲置，无法消费消息。</p>
+<h2 id="Kafka-的消息特性"><a href="#Kafka-的消息特性" class="headerlink" title="Kafka 的消息特性"></a>Kafka 的消息特性</h2><p>消息队列拥有几个比较重要的特性：消息不丢失，消息有序性，消息幂等，消息积压的处理，延迟队列等。</p>
+<h3 id="消息不丢失"><a href="#消息不丢失" class="headerlink" title="消息不丢失"></a>消息不丢失</h3><p>消息丢失有多种原因，常见的原因如下：</p>
+<ul>
+<li>生产者发送失败<ul>
+<li>异步发送消息立即返回，消息实际上没有发到 broker</li>
+</ul>
+</li>
+<li>broker 本身问题<ul>
+<li>主从同步延迟，主分区收到消息后崩溃了</li>
+<li>broker 持久化磁盘的时候宕机，刷盘失败</li>
+</ul>
+</li>
+<li>消费者消费失败<ul>
+<li>消费者消费之前提交了偏移量，但是实际上没有处理消息</li>
+<li>消费者异步消费，提交偏移量之后异步消费失败</li>
+</ul>
+</li>
+</ul>
+<p>可以看到生产者、broker、消费者三个地方出现问题都可能导致消息丢失，那么解决方案自然也是从三个地方分别解决。</p>
+<ul>
+<li>生产者方面<ul>
+<li>修改写入语义 acks，修改为 1 或者 all<ul>
+<li>0：代表发送之后就不管了，可能导致消息丢失</li>
+<li>1：主分区写入成功后就认为发送成功，可能主分区崩溃导致消息丢失</li>
+<li>all：写入主分区并同步给所有 ISR 成员，才认为消息发送成功</li>
+</ul>
+</li>
+<li>调用异步回调消息，确认发送到 broker 成功</li>
+<li>增加异步进程扫描机制，发现漏掉的消息重新发送</li>
+</ul>
+</li>
+<li>broker 方面<ul>
+<li>修改刷盘参数，兼顾刷盘的效率和可靠性，一般不需要修改</li>
+<li>利用多副本机制，ISR 和 ack 半同步来保证消息不会丢失</li>
+</ul>
+</li>
+<li>消费者方面<ul>
+<li>消费之后再提交偏移量</li>
+<li>如果用到了异步消费，可以利用批量消费和批量提交的方式保证</li>
+</ul>
+</li>
+</ul>
+<h3 id="消息有序性"><a href="#消息有序性" class="headerlink" title="消息有序性"></a>消息有序性</h3><p>前面已经提到了，Kafka 只能保证分区的消息有序性，而不能保证主题的消息有序性。</p>
+<p>很显然，最简单的保证消息有序性的方式就是一个主题只用一个分区。所有这个主题的消息都会被发送到这个分区，天然就可以保证顺序性。这个方法的缺点在于性能比较差，一个分区就代表只能有一个消费者进行消费，消费者的性能往往不能满足要求，容易导致消息积压。</p>
+<p>第一个解决方案是单分区，消费者进行异步消费。消费者消费消息之后不进行处理，而是根据业务数据进行哈希，丢到内存队列里面，由不同的线程进行消费。由于是异步消费，这种情况下性能比较好，不过工作线程出错可能产生消息丢失或者积压的问题。</p>
+<p>另一个解决方案是多分区，生产者在发布消息的时候根据业务数据计算出一个哈希值，然后丢到指定的分区中，这样就可以保证每个业务的消息是有序的。缺点在于可能出现数据不均匀和增加分区消息失序的问题。解决方案是通过类似 Redis 集群的 slot 的哈希形式或者一致性哈希算法，可以解决数据不均匀的问题；增加分区之后暂停一段时间再消费，可以缓解消息失序的问题。</p>
+<h3 id="消息幂等"><a href="#消息幂等" class="headerlink" title="消息幂等"></a>消息幂等</h3><p>保证消息不会被重复消费，一方面是生产者不能重复发布同一条消息，另一方面是消费者能够识别出重复的消息进行过滤。</p>
+<p>解决的方案比较独特，是保证消费者消费消息具有幂等的特性，也就是同样的消息只会被消费一次。在这种情况下，即使生产者发送了重复的消息，或者消费者消费了重复的消息，后续的消费过程可以保证幂等，那样就可以直接忽略重复的消息产生的影响。</p>
+<p>保证消费者消费幂等，往往需要借助第三方组件来实现。例如在 MySQL 中插入唯一索引，重复的消息再次被消费时，因为唯一索引冲突消费失败，保证了消息只会被消费一次；或者利用 Redis、布隆过滤器等组件，判断消息已经被消费过，就直接丢弃这条消息。</p>
+<h3 id="消息积压的处理"><a href="#消息积压的处理" class="headerlink" title="消息积压的处理"></a>消息积压的处理</h3><p>消息积压的核心原因还是之前提到的 Kafka 消费组的特性：一个分区只能由一个消费组中的消费者进行消费。这导致了当消息出现积压的时候，我们无法通过增加消费者的方式来提高消费速率，因此我们需要其他的手段来解决消息积压问题。</p>
+<p>解决方案大体可以分成两类：优化分区数量和优化消费者性能</p>
+<ul>
+<li>优化分区数量</li>
+</ul>
+<p>在最开始的时候，最好就可以通过性能测试、压测等方式，确定吞吐量，得出能够满足性能的分区数量；或者预估发送速率、消费速率，确定一个大概的分区数量。确定了分区数量也就确定了最大的消费者数量，保证消费速率大于生产速率就可以避免积压问题。</p>
+<p>如果是已经运行中的主题的分区数量不足，并且不允许增加分区数量的情况下，可以考虑新建一个新的主题，采用更多的分区数量。这种方法本质上还是增加分区，消费者消费老的和新的两边的消息，直到老主题的消息被消费完毕，就可以只消费新的主题，完成消费主题的切换。</p>
+<ul>
+<li>优化消费者性能</li>
+</ul>
+<p>消息积压一般都是消费者性能跟不上生产者生产消息的速率导致的。第一个方法是优化消费者的硬件资源，换成更好的机器；第二个方法是业务性能优化，例如业务降级、减少锁的数量、异步消费、批量消费等。注意异步消费的情况下，需要等所有异步线程执行成功再批量提交偏移量，避免消息丢失。</p>
+<h3 id="延迟队列"><a href="#延迟队列" class="headerlink" title="延迟队列"></a>延迟队列</h3><p>延迟队列的指的是延迟消息，也就是一条消息在经过一段时间之后才会被消费。这种功能往往用于延迟推送上面，例如用户操作的相关内容需要在 10 分钟后才进行发布等等。</p>
+<p>一些消息队列本身就支持延迟队列，例如 RabbitMQ。消息会暂时存储在一个地方，等到延迟的时间满足之后，才会被投递到真正的消息队列里面。</p>
+<p>如果 Kafka 要实现一个延迟队列，那么往往就需要借助数据库来实现。比较通用的解决方案是利用 Redis 的 zset 来实现一个延迟队列。</p>
+<p>业务本身做一个定时任务，例如每分钟执行一次，作为一个轮询器。生产者产生延迟消息的时候，把消息的内容作为 zset 的 member，消息延迟到期的时间戳作为 score，投递到 Redis 的 zset 结构体中。</p>
+<p>业务的定时任务每分钟进行一次轮询，不断从 Redis 的这个 zset 中取出 score 最小的一条消息，然后判断需要投递的时间戳是否已经小于等于当前时间戳了。</p>
+<ul>
+<li>小于等于当前时间戳，说明这条消息已经需要投递了，那么轮询器就把这条消息投递到消息队列中，并继续轮询取出下一条 zset 中的消息</li>
+<li>大于当前时间戳，说明 zset 中最早的一条消息还没有到需要投递的时间，那么就重新放回 zset 中，并且结束本次轮询</li>
+</ul>
+<p>需要注意的是，轮询器需要设置一个超时时间，当 zset 中消息很多的时候，可能有大量的消息同时到达了需要投递的时间，轮询器不断取出消息并投递的过程会超过一分钟，下一个轮询定时任务会启动导致两边争抢消息。因此建议轮询器设定一个超时时间，如 50s，经过 50s 后就停止从 zset 中取出数据，等待下一分钟的定时任务来继续执行。</p>
+<p>这种方案可以适用于绝大多数的延迟队列场景，代码逻辑也比较简单。只需要注意延迟的时间不会那么精准，并且每次取出一条的性能会比较差。需要优化的话可以从批量取出、异步投递等方向进行优化。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总的来说，Kafka 是一个比较常用的消息队列组件，了解一些 Kafka 和消息队列的基础知识，对于业务的性能优化、架构设计都有很大的帮助。</p>
+<p>消息队列的每一个的特性都可以拓展成复杂的文章，想要继续深入了解 Kafka 的相关知识，大量的资料和实践都是必不可少的。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>《深入理解 Kafka：核心设计与实践原理》，朱忠华，电子工业出版社</li>
+<li><a target="_blank" rel="noopener" href="https://time.geekbang.org/column/intro/100551601?utm_campaign=geektime_search&utm_content=geektime_search&utm_medium=geektime_search&utm_source=geektime_search&utm_term=geektime_search">极客时间《后端工程师的高阶面经》</a></li>
+</ul>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-4.0协议，转载请注明出处<br>作者: Mikawa</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2024-03-30</span><i class="fa fa-tag"></i><a class="tag" href="/tags/技术基础/" title="技术基础">技术基础 </a><i class="fa fa-tag"></i><a class="tag" href="/tags/消息队列/" title="消息队列">消息队列 </a><span class="leancloud_visitors"></span><span>大约3843个字, 12分钟48秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0AMikawa%20Blog%20%C2%B7%20Kafka%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D%0Ahttps://xuh723.github.io/2024/03/30/Kafka%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2024/04/03/Raft%E7%AE%97%E6%B3%95%E5%9F%BA%E7%A1%80%E4%BB%8B%E7%BB%8D/" title="Raft算法基础介绍">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2024/03/24/ES%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8%E5%92%8C%E7%B4%A2%E5%BC%95%E6%90%9C%E7%B4%A2%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B/" title="Elastic Search集群存储和索引搜索原理简介">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><script>loadComment();</script></div></div></div></div></main-outlet><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>
