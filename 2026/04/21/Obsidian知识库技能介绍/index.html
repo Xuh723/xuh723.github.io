@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="Mikawa"><title>从零开始：为 Claude Code 打造一个 Obsidian 知识库写入技能 · Mikawa Blog</title><meta name="description" content="概述Claude Code 是个好东西，但对话结束后那些有价值的内容就散落在历史记录里了。想着能不能让 Claude 直接把内容写到 Obsidian 里，这样既能保留上下文，又能利用 Obsidian 的知识管理能力。
+折腾了一下午，搞出来一个 Skill，支持三种场景：备忘录、对话总结、知识理解"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta id="site_root_url" data="/"><meta id="default-theme" data="light"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/maple_icon.png"><link rel="stylesheet" href="/css/theme/light.css"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/url_for.js"></script><script src="/js/friends-link-generator.js"></script><script src="/js/jquery.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/site.js"></script><script src="/js/router.js"></script><script src="/js/darkLightToggle.js"></script><script src="/js/add-bookmark.js"></script><link rel="stylesheet" href="/css/comments/gittalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>function loadComment(retry = 3) { 
+  const id = site.getThis()?.title || '从零开始：为 Claude Code 打造一个 Obsidian 知识库写入技能';
+  if (!id) {
+    if (retry > 0) {
+      setTimeout(() => loadComment(retry - 1), 1000);
+    }
+    return;
+  }
+  const gitalk = new Gitalk({
+    clientID: 'e9eddbf66d9a96e58b54',
+    clientSecret: '',
+    repo: 'xuh723.github.io',      // The repository of store comments,
+    owner: 'xuh723',
+    admin: ['xuh723'],
+    id,      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk_container')
+}
+</script><meta name="generator" content="Hexo 7.1.1"></head><body><main-outlet><div class="page-top animated"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/avatar.jpg"></div></div></div><div class="toc-mobile"><div class="toc-button"><span>目录</span></div><div class="toc-container in-page animated fadeInDown"><div class="toclist-container"><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%A6%82%E8%BF%B0"><span class="toclist-text">概述</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%81%9A%E8%BF%99%E4%BB%B6%E4%BA%8B"><span class="toclist-text">为什么要做这件事</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF"><span class="toclist-text">设计思路</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E4%B8%89%E7%A7%8D%E6%96%87%E6%A1%A3%E7%B1%BB%E5%9E%8B"><span class="toclist-text">三种文档类型</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E6%A1%A3%E6%A0%BC%E5%BC%8F"><span class="toclist-text">文档格式</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%8A%80%E6%9C%AF%E5%AE%9E%E7%8E%B0"><span class="toclist-text">技术实现</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#Skill-%E7%BB%93%E6%9E%84"><span class="toclist-text">Skill 结构</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E4%BB%B6%E5%90%8D%E7%94%9F%E6%88%90"><span class="toclist-text">文件名生成</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%86%B2%E7%AA%81%E5%A4%84%E7%90%86"><span class="toclist-text">冲突处理</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%AE%9E%E9%99%85%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toclist-text">实际使用示例</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E8%AE%B0%E5%BD%95%E6%96%87%E7%AB%A0"><span class="toclist-text">记录文章</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93%E5%AF%B9%E8%AF%9D"><span class="toclist-text">总结对话</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E7%90%86%E8%A7%A3-GitHub-%E4%BB%93%E5%BA%93"><span class="toclist-text">理解 GitHub 仓库</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E8%B8%A9%E8%BF%87%E7%9A%84%E5%9D%91"><span class="toclist-text">踩过的坑</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E9%97%AE%E9%A2%98"><span class="toclist-text">文件路径问题</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E4%BB%B6%E5%90%8D%E9%95%BF%E5%BA%A6"><span class="toclist-text">文件名长度</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%A0%87%E7%AD%BE%E8%A7%84%E8%8C%83"><span class="toclist-text">标签规范</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%95%B4%E5%90%88-Git-%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toclist-text">整合 Git 工作流</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%BA%90"><span class="toclist-text">参考资源</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="toclist-text">下一步</span></a></li></ol></div></div></div></div><div class="sidebar animated"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/avatar.jpg" style="width:220px;" alt="favicon"><h3 title=""><a href="/">Mikawa Blog</a></h3><div class="description"><p>Best Wishes!</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/Xuh723"><i class="fa fa-github"></i></a></li></ul></div><div class="toc-container in-sidebar animated fadeInDown"><details class="ltr" open><summary>目录</summary><div class="toclist-container"><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%A6%82%E8%BF%B0"><span class="toclist-text">概述</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%81%9A%E8%BF%99%E4%BB%B6%E4%BA%8B"><span class="toclist-text">为什么要做这件事</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF"><span class="toclist-text">设计思路</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E4%B8%89%E7%A7%8D%E6%96%87%E6%A1%A3%E7%B1%BB%E5%9E%8B"><span class="toclist-text">三种文档类型</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E6%A1%A3%E6%A0%BC%E5%BC%8F"><span class="toclist-text">文档格式</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%8A%80%E6%9C%AF%E5%AE%9E%E7%8E%B0"><span class="toclist-text">技术实现</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#Skill-%E7%BB%93%E6%9E%84"><span class="toclist-text">Skill 结构</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E4%BB%B6%E5%90%8D%E7%94%9F%E6%88%90"><span class="toclist-text">文件名生成</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%86%B2%E7%AA%81%E5%A4%84%E7%90%86"><span class="toclist-text">冲突处理</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%AE%9E%E9%99%85%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toclist-text">实际使用示例</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E8%AE%B0%E5%BD%95%E6%96%87%E7%AB%A0"><span class="toclist-text">记录文章</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93%E5%AF%B9%E8%AF%9D"><span class="toclist-text">总结对话</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E7%90%86%E8%A7%A3-GitHub-%E4%BB%93%E5%BA%93"><span class="toclist-text">理解 GitHub 仓库</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E8%B8%A9%E8%BF%87%E7%9A%84%E5%9D%91"><span class="toclist-text">踩过的坑</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E9%97%AE%E9%A2%98"><span class="toclist-text">文件路径问题</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%96%87%E4%BB%B6%E5%90%8D%E9%95%BF%E5%BA%A6"><span class="toclist-text">文件名长度</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%A0%87%E7%AD%BE%E8%A7%84%E8%8C%83"><span class="toclist-text">标签规范</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%95%B4%E5%90%88-Git-%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toclist-text">整合 Git 工作流</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%BA%90"><span class="toclist-text">参考资源</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5"><span class="toclist-text">下一步</span></a></li></ol></div></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-4.0 </span><i class="fa fa-star"></i><span> Mikawa</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main animated fadeInDown"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated"><div class="post-title"><h3><a>从零开始：为 Claude Code 打造一个 Obsidian 知识库写入技能</a></h3></div><div class="post-content"><p><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Claude Code 是个好东西，但对话结束后那些有价值的内容就散落在历史记录里了。想着能不能让 Claude 直接把内容写到 Obsidian 里，这样既能保留上下文，又能利用 Obsidian 的知识管理能力。</p>
+<p>折腾了一下午，搞出来一个 Skill，支持三种场景：备忘录、对话总结、知识理解。这篇文章记录一下实现思路和踩过的坑。</p>
+<h2 id="为什么要做这件事"><a href="#为什么要做这件事" class="headerlink" title="为什么要做这件事"></a>为什么要做这件事</h2><p>用 Claude Code 的过程中经常遇到这些情况：</p>
+<ul>
+<li>查了半天资料，想记个笔记，得手动复制粘贴到 Obsidian</li>
+<li>聊完一个技术话题，想总结一下，又得新开窗口整理</li>
+<li>看到一篇好文章让 Claude 解读，解读完内容就丢了</li>
+</ul>
+<p>理想情况是：直接告诉 Claude “记录一下”、”总结这段对话”、”理解这篇文章”，它自动把内容整理成 Obsidian 文档，还带上标签和时间戳。</p>
+<h2 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h2><h3 id="三种文档类型"><a href="#三种文档类型" class="headerlink" title="三种文档类型"></a>三种文档类型</h3><p>根据使用场景，划分了三种类型：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>目录</th>
+<th>触发词</th>
+<th>标签</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>memo</td>
+<td><code>memo/</code></td>
+<td>“记录一下”、”备忘”</td>
+<td>#memo</td>
+</tr>
+<tr>
+<td>repository</td>
+<td><code>repository/</code></td>
+<td>“总结对话”、”归纳一下”</td>
+<td>#repository</td>
+</tr>
+<tr>
+<td>knowledge</td>
+<td><code>knowledge/</code></td>
+<td>“理解这篇文章”</td>
+<td>#knowledge</td>
+</tr>
+</tbody></table>
+<p><strong>memo</strong> 是随手记，想到什么记什么。<strong>repository</strong> 是对话的沉淀，把讨论过程整理成可检索的知识。<strong>knowledge</strong> 是对外部内容的理解，比如文章、GitHub 仓库。</p>
+<h3 id="文档格式"><a href="#文档格式" class="headerlink" title="文档格式"></a>文档格式</h3><p>所有文档都用 Obsidian 原生的 Markdown + YAML frontmatter：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">time:</span> <span class="number">2026-04-21T20:30:00</span></span><br><span class="line"><span class="attr">tags:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">knowledge</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">agent</span></span><br><span class="line"><span class="attr">source:</span> <span class="string">https://bytetech.info/articles/xxx</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+
+<p>正文分两部分：原始内容 + AI 的理解总结。这样既能保留原始信息，又有 AI 的加工提炼。</p>
+<h2 id="技术实现"><a href="#技术实现" class="headerlink" title="技术实现"></a>技术实现</h2><h3 id="Skill-结构"><a href="#Skill-结构" class="headerlink" title="Skill 结构"></a>Skill 结构</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">obsidian-knowledge-store/</span><br><span class="line">├── SKILL.md              # 核心说明文档</span><br><span class="line">├── scripts/</span><br><span class="line">│   └── create_note.py    # 文档生成脚本</span><br><span class="line">└── assets/</span><br></pre></td></tr></table></figure>
+
+<p>SKILL.md 是给 Claude 看的”使用说明书”，定义了触发条件、操作流程、文件名规则。</p>
+<h3 id="文件名生成"><a href="#文件名生成" class="headerlink" title="文件名生成"></a>文件名生成</h3><p>一开始想省事，用时间戳命名：<code>memo-20240115-093000.md</code>。但这样根本看不出文件内容，目录一多就懵了。</p>
+<p>后来改成有意义的命名：<code>memo-&#123;关键词摘要&#125;-&#123;YYYYMMDD&#125;.md</code></p>
+<p>比如：</p>
+<ul>
+<li><code>memo-字节-OpenClaw-安装实践-20260421.md</code></li>
+<li><code>know-Agent超级进化-ByteTech-20260421.md</code></li>
+</ul>
+<p>关键词从标题或内容里提取，去掉”的、了、and、the”这些虚词。长度控制在 80 字符以内，太长 Obsidian 显示不全。</p>
+<h3 id="冲突处理"><a href="#冲突处理" class="headerlink" title="冲突处理"></a>冲突处理</h3><p>如果同一天写了两篇同样主题的笔记，文件名会冲突。解决方式是加序号：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">memo-项目启动-20240115.md</span><br><span class="line">memo-项目启动-20240115-01.md</span><br><span class="line">memo-项目启动-20240115-02.md</span><br></pre></td></tr></table></figure>
+
+<h2 id="实际使用示例"><a href="#实际使用示例" class="headerlink" title="实际使用示例"></a>实际使用示例</h2><h3 id="记录文章"><a href="#记录文章" class="headerlink" title="记录文章"></a>记录文章</h3><p>看到一篇 ByteTech 文章，直接丢链接给 Claude：</p>
+<blockquote>
+<p>“记录备忘 <a target="_blank" rel="noopener" href="https://bytetech.info/articles/7601948070233767974">https://bytetech.info/articles/7601948070233767974</a>“</p>
+</blockquote>
+<p>Claude 提取文章信息，生成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">memo-字节-OpenClaw-安装实践-20260421.md</span><br></pre></td></tr></table></figure>
+
+<p>内容包括文章摘要、AI 的理解、待办事项。</p>
+<h3 id="总结对话"><a href="#总结对话" class="headerlink" title="总结对话"></a>总结对话</h3><p>聊完一个话题：</p>
+<blockquote>
+<p>“总结这段对话”</p>
+</blockquote>
+<p>生成 repository 文档，包含讨论主题、关键决策、待办事项。</p>
+<h3 id="理解-GitHub-仓库"><a href="#理解-GitHub-仓库" class="headerlink" title="理解 GitHub 仓库"></a>理解 GitHub 仓库</h3><p>看到个有趣的仓库：</p>
+<blockquote>
+<p>“记录备忘 <a target="_blank" rel="noopener" href="https://github.com/kepano/obsidian-skills">https://github.com/kepano/obsidian-skills</a>“</p>
+</blockquote>
+<p>Claude 分析仓库 README，提取功能列表，给出借鉴建议。</p>
+<h2 id="踩过的坑"><a href="#踩过的坑" class="headerlink" title="踩过的坑"></a>踩过的坑</h2><h3 id="文件路径问题"><a href="#文件路径问题" class="headerlink" title="文件路径问题"></a>文件路径问题</h3><p>一开始 SKILL.md 里写的路径是相对于 vault 根目录的，但 Claude 执行时工作目录可能不对。后来改成先检查目录是否存在，不存在就创建。</p>
+<h3 id="文件名长度"><a href="#文件名长度" class="headerlink" title="文件名长度"></a>文件名长度</h3><p>中文文件名在 Git 里显示正常，但终端有时候会有编码问题。好在 Obsidian 和 Git 都支持 Unicode，实际使用没问题。</p>
+<h3 id="标签规范"><a href="#标签规范" class="headerlink" title="标签规范"></a>标签规范</h3><p>Obsidian 的标签不能有空格，必须写成 #ai工具 而不是 #ai 工具。SKILL.md 里要明确这一点。</p>
+<h2 id="整合-Git-工作流"><a href="#整合-Git-工作流" class="headerlink" title="整合 Git 工作流"></a>整合 Git 工作流</h2><p>这个 vault 配了 obsidian-git 插件，手动备份：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Cmd+P -&gt; Git: Commit and push</span><br></pre></td></tr></table></figure>
+
+<p>Claude 写完文档后自动 commit，配合 SSH key 免密推送到 GitHub。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># .obsidian/plugins/obsidian-git/data.json 关键配置</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;commitMessage&quot;</span>: <span class="string">&quot;vault backup: &#123;&#123;date&#125;&#125;&quot;</span>,</span><br><span class="line">  <span class="string">&quot;pullBeforePush&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">  <span class="string">&quot;autoBackupAfterFileChange&quot;</span>: <span class="literal">false</span>  <span class="comment"># 手动控制，避免频繁提交</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源"></a>参考资源</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/kepano/obsidian-skills">kepano&#x2F;obsidian-skills</a> - 参考了同类 Skill 的设计</li>
+<li><a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a> - Skill 规范文档</li>
+<li><a target="_blank" rel="noopener" href="https://help.obsidian.md/Editing+and+formatting/Properties">Obsidian Help - YAML front matter</a> - YAML 属性文档</li>
+</ul>
+<h2 id="下一步"><a href="#下一步" class="headerlink" title="下一步"></a>下一步</h2><ul>
+<li>研究整合 <code>obsidian-cli</code> skill，实现更复杂的 Obsidian 操作</li>
+<li>探索 <code>defuddle</code> 的网页提取能力，替代 WebFetch</li>
+<li>添加更多模板，比如会议纪要模板、读书笔记模板</li>
+</ul>
+<p>这个 Skill 现在已经成了日常工作流的一部分，随手记东西方便多了。</p>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-4.0协议，转载请注明出处<br>作者: Mikawa</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2026-04-21</span><i class="fa fa-tag"></i><a class="tag" href="/tags/工程备忘/" title="工程备忘">工程备忘 </a><i class="fa fa-tag"></i><a class="tag" href="/tags/claude-code/" title="claude-code">claude-code </a><i class="fa fa-tag"></i><a class="tag" href="/tags/Obsidian/" title="Obsidian">Obsidian </a><span class="leancloud_visitors"></span><span>大约1255个字, 4分钟11秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0AMikawa%20Blog%20%C2%B7%20%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%EF%BC%9A%E4%B8%BA%20Claude%20Code%20%E6%89%93%E9%80%A0%E4%B8%80%E4%B8%AA%20Obsidian%20%E7%9F%A5%E8%AF%86%E5%BA%93%E5%86%99%E5%85%A5%E6%8A%80%E8%83%BD%0Ahttps://xuh723.github.io/2026/04/21/Obsidian%E7%9F%A5%E8%AF%86%E5%BA%93%E6%8A%80%E8%83%BD%E4%BB%8B%E7%BB%8D/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2026/04/21/%E9%85%8D%E7%BD%AEgithub-ssh%E5%AF%86%E9%92%A5/" title="配置 GitHub SSH 密钥">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2024/06/24/singleflight%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D/" title="singleflight简单介绍">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><script>loadComment();</script></div></div></div></div></main-outlet><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>
