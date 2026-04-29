@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="Mikawa"><title>AI 提效的前提，不是模型更强，而是方向更清晰 · Mikawa Blog</title><meta name="description" content="概述这段时间越用 AI，越觉得一个问题很明显：很多人讨论 AI 提效，讨论着讨论着就会变成“这个模型更不更强”“这个工具能不能自动生成更多内容”。这些当然重要，不过它们都不是最前面的事。
+更前面的事其实只有两个：有没有方向，有没有链路。没有方向，AI 只能放大混乱；没有链路，AI 只能在零散环节里做"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta id="site_root_url" data="/"><meta id="default-theme" data="light"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/maple_icon.png"><link rel="stylesheet" href="/css/theme/light.css"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/url_for.js"></script><script src="/js/friends-link-generator.js"></script><script src="/js/jquery.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/site.js"></script><script src="/js/router.js"></script><script src="/js/darkLightToggle.js"></script><script src="/js/add-bookmark.js"></script><link rel="stylesheet" href="/css/comments/gittalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>function loadComment(retry = 3) { 
+  const id = site.getThis()?.title || 'AI 提效的前提，不是模型更强，而是方向更清晰';
+  if (!id) {
+    if (retry > 0) {
+      setTimeout(() => loadComment(retry - 1), 1000);
+    }
+    return;
+  }
+  const gitalk = new Gitalk({
+    clientID: 'e9eddbf66d9a96e58b54',
+    clientSecret: '',
+    repo: 'xuh723.github.io',      // The repository of store comments,
+    owner: 'xuh723',
+    admin: ['xuh723'],
+    id,      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk_container')
+}
+</script><meta name="generator" content="Hexo 7.1.1"></head><body><main-outlet><div class="page-top animated"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/avatar.jpg"></div></div></div><div class="toc-mobile"><div class="toc-button"><span>目录</span></div><div class="toc-container in-page animated fadeInDown"><div class="toclist-container"><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%A6%82%E8%BF%B0"><span class="toclist-text">概述</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#AI-%E6%98%AF%E6%94%BE%E5%A4%A7%E5%99%A8%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8F%91%E5%8A%A8%E6%9C%BA"><span class="toclist-text">AI 是放大器，不是发动机</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BE%88%E5%A4%9A-AI-%E6%8F%90%E6%95%88%E6%9C%80%E5%90%8E%E9%83%BD%E5%8F%98%E6%88%90%E4%BA%86%E2%80%9C%E6%8B%BF%E7%9D%80%E9%94%A4%E5%AD%90%E6%89%BE%E9%92%89%E5%AD%90%E2%80%9D"><span class="toclist-text">为什么很多 AI 提效最后都变成了“拿着锤子找钉子”</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%88%90%E7%86%9F%E9%93%BE%E8%B7%AF%EF%BC%8C%E6%9B%B4%E5%AE%B9%E6%98%93%E5%81%9A%E5%87%BA-AI-%E6%8F%90%E6%95%88%E6%88%90%E6%9E%9C"><span class="toclist-text">成熟链路，更容易做出 AI 提效成果</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%8E%A2%E7%B4%A2%E6%80%A7%E9%A1%B9%E7%9B%AE%E9%87%8C%EF%BC%8C%E5%85%88%E5%88%AB%E6%80%A5%E7%9D%80%E8%AE%A9-AI-%E5%BD%93%E4%B8%BB%E8%A7%92"><span class="toclist-text">探索性项目里，先别急着让 AI 当主角</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%B8%80%E6%9D%A1%E6%9B%B4%E9%9D%A0%E8%B0%B1%E7%9A%84-AI-%E6%8F%90%E6%95%88%E8%B7%AF%E5%BE%84"><span class="toclist-text">一条更靠谱的 AI 提效路径</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%85%88%E4%BA%BA%E5%B7%A5%E8%B7%91%E9%80%9A%E6%9C%80%E5%B0%8F%E9%97%AD%E7%8E%AF"><span class="toclist-text">先人工跑通最小闭环</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%86%8D%E6%8A%8A%E9%93%BE%E8%B7%AF%E6%8A%BD%E5%87%BA%E6%9D%A5"><span class="toclist-text">再把链路抽出来</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%9C%80%E5%90%8E%E8%AE%A9-AI-%E5%8E%BB%E6%94%BE%E5%A4%A7"><span class="toclist-text">最后让 AI 去放大</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%BA%BA%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BB%B7%E5%80%BC%EF%BC%8C%E5%85%B6%E5%AE%9E%E5%9C%A8%E2%80%9C%E5%AE%9A%E6%96%B9%E5%90%91%E2%80%9D"><span class="toclist-text">人的核心价值，其实在“定方向”</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%88%91%E7%8E%B0%E5%9C%A8%E5%AF%B9-AI-%E6%8F%90%E6%95%88%E7%9A%84%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E5%88%A4%E6%96%AD"><span class="toclist-text">我现在对 AI 提效的一个简单判断</span></a></li></ol></div></div></div></div><div class="sidebar animated"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/avatar.jpg" style="width:220px;" alt="favicon"><h3 title=""><a href="/">Mikawa Blog</a></h3><div class="description"><p>Best Wishes!</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/Xuh723"><i class="fa fa-github"></i></a></li></ul></div><div class="toc-container in-sidebar animated fadeInDown"><details class="ltr" open><summary>目录</summary><div class="toclist-container"><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%A6%82%E8%BF%B0"><span class="toclist-text">概述</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#AI-%E6%98%AF%E6%94%BE%E5%A4%A7%E5%99%A8%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8F%91%E5%8A%A8%E6%9C%BA"><span class="toclist-text">AI 是放大器，不是发动机</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BE%88%E5%A4%9A-AI-%E6%8F%90%E6%95%88%E6%9C%80%E5%90%8E%E9%83%BD%E5%8F%98%E6%88%90%E4%BA%86%E2%80%9C%E6%8B%BF%E7%9D%80%E9%94%A4%E5%AD%90%E6%89%BE%E9%92%89%E5%AD%90%E2%80%9D"><span class="toclist-text">为什么很多 AI 提效最后都变成了“拿着锤子找钉子”</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%88%90%E7%86%9F%E9%93%BE%E8%B7%AF%EF%BC%8C%E6%9B%B4%E5%AE%B9%E6%98%93%E5%81%9A%E5%87%BA-AI-%E6%8F%90%E6%95%88%E6%88%90%E6%9E%9C"><span class="toclist-text">成熟链路，更容易做出 AI 提效成果</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%8E%A2%E7%B4%A2%E6%80%A7%E9%A1%B9%E7%9B%AE%E9%87%8C%EF%BC%8C%E5%85%88%E5%88%AB%E6%80%A5%E7%9D%80%E8%AE%A9-AI-%E5%BD%93%E4%B8%BB%E8%A7%92"><span class="toclist-text">探索性项目里，先别急着让 AI 当主角</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%B8%80%E6%9D%A1%E6%9B%B4%E9%9D%A0%E8%B0%B1%E7%9A%84-AI-%E6%8F%90%E6%95%88%E8%B7%AF%E5%BE%84"><span class="toclist-text">一条更靠谱的 AI 提效路径</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%85%88%E4%BA%BA%E5%B7%A5%E8%B7%91%E9%80%9A%E6%9C%80%E5%B0%8F%E9%97%AD%E7%8E%AF"><span class="toclist-text">先人工跑通最小闭环</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%86%8D%E6%8A%8A%E9%93%BE%E8%B7%AF%E6%8A%BD%E5%87%BA%E6%9D%A5"><span class="toclist-text">再把链路抽出来</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E6%9C%80%E5%90%8E%E8%AE%A9-AI-%E5%8E%BB%E6%94%BE%E5%A4%A7"><span class="toclist-text">最后让 AI 去放大</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E4%BA%BA%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BB%B7%E5%80%BC%EF%BC%8C%E5%85%B6%E5%AE%9E%E5%9C%A8%E2%80%9C%E5%AE%9A%E6%96%B9%E5%90%91%E2%80%9D"><span class="toclist-text">人的核心价值，其实在“定方向”</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%88%91%E7%8E%B0%E5%9C%A8%E5%AF%B9-AI-%E6%8F%90%E6%95%88%E7%9A%84%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E5%88%A4%E6%96%AD"><span class="toclist-text">我现在对 AI 提效的一个简单判断</span></a></li></ol></div></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-4.0 </span><i class="fa fa-star"></i><span> Mikawa</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main animated fadeInDown"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated"><div class="post-title"><h3><a>AI 提效的前提，不是模型更强，而是方向更清晰</a></h3></div><div class="post-content"><p><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>这段时间越用 AI，越觉得一个问题很明显：很多人讨论 AI 提效，讨论着讨论着就会变成“这个模型更不更强”“这个工具能不能自动生成更多内容”。这些当然重要，不过它们都不是最前面的事。</p>
+<p>更前面的事其实只有两个：有没有方向，有没有链路。没有方向，AI 只能放大混乱；没有链路，AI 只能在零散环节里做一些看起来很忙、但不一定真正有价值的补丁。简单来说，AI 更像放大器，不是发动机。它能把已经成立的东西放大，但不会替你凭空创造一个正确的起点。</p>
+<h2 id="AI-是放大器，不是发动机"><a href="#AI-是放大器，不是发动机" class="headerlink" title="AI 是放大器，不是发动机"></a>AI 是放大器，不是发动机</h2><p>“AI 是放大器，不是发动机” 这句话我最近越来越认同。</p>
+<p>发动机的意思是，自己能提供动力，自己能驱动方向，哪怕前面没有路，也要先带着你往前走。放大器不是这样。放大器的前提，是你先有输入，它只负责把这个输入变大、变强、变快。</p>
+<p>放到实际工作里也一样：</p>
+<ul>
+<li>你有明确目标，AI 可以帮你把执行效率放大</li>
+<li>你有清晰问题，AI 可以帮你扩展解法空间</li>
+<li>你有稳定流程，AI 可以帮你压缩重复劳动</li>
+</ul>
+<p>但如果前面这些都没有，AI 最多只是生成更多文本、更多方案、更多看上去很热闹的输出。问题不在于它“不聪明”，而在于输入本身没有方向。</p>
+<p>这个判断其实很残酷，但挺真实：<code>0 × 10 = 0</code>。方向是 0，放大 10 倍也还是 0。</p>
+<h2 id="为什么很多-AI-提效最后都变成了“拿着锤子找钉子”"><a href="#为什么很多-AI-提效最后都变成了“拿着锤子找钉子”" class="headerlink" title="为什么很多 AI 提效最后都变成了“拿着锤子找钉子”"></a>为什么很多 AI 提效最后都变成了“拿着锤子找钉子”</h2><p>现在很多团队或者个人在尝试 AI 时，很容易掉进一个模式里：先看到工具，再去找应用场景。</p>
+<p>比如看到一个 Agent 很强，就开始想“能不能让它接进某个流程”；看到一个模型很会写，就开始想“能不能把所有文档都扔给它”；看到自动化工作流很酷，就开始想“能不能把手头的事情全自动化”。</p>
+<p>这种思路的问题不是完全错，而是顺序反了。</p>
+<p>顺序一旦反过来，结果就很容易变成：</p>
+<ul>
+<li>工具很多，但解决的问题不稳定</li>
+<li>输出很多，但很难判断好坏</li>
+<li>看起来在提效，实际上只是增加了更多试错成本</li>
+</ul>
+<p>这就是典型的“拿着锤子找钉子”。不是先发现一个真实问题，再判断 AI 适不适合切进去；而是先拿到一个 AI 工具，再到处寻找可以套进去的地方。</p>
+<p>这种状态在探索性项目里尤其明显。因为探索性项目本来就没有固定路径，没有成熟判断标准，也没有稳定输入。人在这种时候都很容易迷茫，更别说让 AI 直接替你找答案。</p>
+<h2 id="成熟链路，更容易做出-AI-提效成果"><a href="#成熟链路，更容易做出-AI-提效成果" class="headerlink" title="成熟链路，更容易做出 AI 提效成果"></a>成熟链路，更容易做出 AI 提效成果</h2><p>相反，AI 最容易出成果的地方，往往不是最“新”的地方，而是最成熟的地方。</p>
+<p>所谓成熟链路，一般有几个特征：</p>
+<ul>
+<li>目标明确</li>
+<li>输入输出稳定</li>
+<li>中间环节相对固定</li>
+<li>有历史经验可以参考</li>
+<li>成果可以衡量</li>
+</ul>
+<p>这种场景下，AI 很容易找到切入点。</p>
+<p>比如一个已经跑顺的开发链路里，AI 可以帮你做这些事情：</p>
+<ul>
+<li>根据需求草拟代码框架</li>
+<li>生成测试样例</li>
+<li>补文档和注释</li>
+<li>整理评审材料</li>
+<li>归纳问题排查过程</li>
+</ul>
+<p>这些事情之所以适合 AI，不是因为它们“低级”，而是因为它们都处在一条已经被验证过的链路里。AI 不需要替你定义目标，也不需要替你判断方向，只需要在已有方向上做加速。</p>
+<p>这个时候，提效往往是能量化的。你能比较清楚地知道：</p>
+<ul>
+<li>哪一步原来最耗时</li>
+<li>AI 替代后缩短了多少时间</li>
+<li>输出质量有没有明显下降</li>
+<li>有没有形成可复用模板</li>
+</ul>
+<p>一旦能量化，AI 的价值就不只是“感觉还行”，而是能真正沉淀成方法。</p>
+<h2 id="探索性项目里，先别急着让-AI-当主角"><a href="#探索性项目里，先别急着让-AI-当主角" class="headerlink" title="探索性项目里，先别急着让 AI 当主角"></a>探索性项目里，先别急着让 AI 当主角</h2><p>探索性项目就不一样了。</p>
+<p>这类事情往往一开始连“问题到底是什么”都还没完全确定，更不用说标准流程。比如新业务方向、新产品形态、新的协作机制，很多东西本身都还在试。</p>
+<p>这个阶段最容易犯的错，就是希望 AI 直接给出完整答案。</p>
+<p>但 AI 在这里更适合做的，通常不是“拍板”，而是辅助：</p>
+<ul>
+<li>帮忙做信息搜集</li>
+<li>帮忙列方案</li>
+<li>帮忙做初步对比</li>
+<li>帮忙把零散想法组织起来</li>
+</ul>
+<p>也就是说，AI 在探索期更像副驾驶，不像驾驶员。</p>
+<p>真正关键的部分还是得靠人来做：</p>
+<ul>
+<li>判断什么问题值得解决</li>
+<li>判断什么方向更重要</li>
+<li>判断哪个方案只是看起来合理</li>
+<li>判断什么时候该继续试，什么时候该收缩</li>
+</ul>
+<p>如果这些判断都没有，AI 生成再多内容也只是“增加了信息量”，不等于“提高了决策质量”。</p>
+<h2 id="一条更靠谱的-AI-提效路径"><a href="#一条更靠谱的-AI-提效路径" class="headerlink" title="一条更靠谱的 AI 提效路径"></a>一条更靠谱的 AI 提效路径</h2><p>如果要把这件事说得更直接一点，我现在更认同的路径大概是这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">探索问题 -&gt; 人工验证 -&gt; 提炼最小闭环 -&gt; 固化链路 -&gt; AI 放大 -&gt; 持续优化</span><br></pre></td></tr></table></figure>
+
+<p>这里面有几个环节特别关键。</p>
+<h3 id="先人工跑通最小闭环"><a href="#先人工跑通最小闭环" class="headerlink" title="先人工跑通最小闭环"></a>先人工跑通最小闭环</h3><p>很多事情在刚开始时，最好还是人自己先走一遍。不是因为 AI 没用，而是因为你得先知道：</p>
+<ul>
+<li>这件事到底要解决什么</li>
+<li>真正卡人的点在哪</li>
+<li>哪些步骤是必要的</li>
+<li>哪些步骤只是历史包袱</li>
+</ul>
+<p>如果连这一步都没搞清楚，就急着上 AI，最后通常只能得到一个很复杂、但不稳定的自动化壳子。</p>
+<h3 id="再把链路抽出来"><a href="#再把链路抽出来" class="headerlink" title="再把链路抽出来"></a>再把链路抽出来</h3><p>当一个最小闭环跑通之后，下一步不是马上“全自动化”，而是先把链路抽清楚。</p>
+<p>也就是把事情拆成几个问题：</p>
+<ul>
+<li>输入是什么</li>
+<li>输出是什么</li>
+<li>中间有哪些关键步骤</li>
+<li>哪一步最耗时</li>
+<li>哪一步最适合标准化</li>
+</ul>
+<p>这个阶段其实特别重要，因为 AI 最擅长的恰恰不是“无中生有”，而是“在明确边界里高效执行”。</p>
+<h3 id="最后让-AI-去放大"><a href="#最后让-AI-去放大" class="headerlink" title="最后让 AI 去放大"></a>最后让 AI 去放大</h3><p>等链路清楚以后，再让 AI 进去，效果通常会好很多。</p>
+<p>这时候你不再是笼统地问“AI 能帮我做什么”，而是会问得很具体：</p>
+<ul>
+<li>这一段文档整理能不能自动化</li>
+<li>这个固定格式能不能直接生成</li>
+<li>这类重复查询能不能自动归纳</li>
+<li>这组步骤能不能沉淀成 skill 或工作流</li>
+</ul>
+<p>一旦问题变具体，AI 的价值就会明显提高。</p>
+<h2 id="人的核心价值，其实在“定方向”"><a href="#人的核心价值，其实在“定方向”" class="headerlink" title="人的核心价值，其实在“定方向”"></a>人的核心价值，其实在“定方向”</h2><p>说到底，AI 越强，人的价值越不会消失，只会更集中。</p>
+<p>以前很多人做事，时间花在执行上。现在执行部分越来越能被工具接住，那么真正拉开差距的地方，就会越来越集中在这些能力上：</p>
+<ul>
+<li>判断什么值得做</li>
+<li>识别什么是伪需求</li>
+<li>设定优先级</li>
+<li>提炼链路</li>
+<li>设计约束</li>
+<li>决定什么时候该让 AI 参与，什么时候不该</li>
+</ul>
+<p>这也是为什么我越来越觉得，AI 时代里“方向感”会比“会不会用某个具体工具”更重要。</p>
+<p>工具更新很快，模型也会一直变。但一个人是否具备：</p>
+<ul>
+<li>看清问题的能力</li>
+<li>定义目标的能力</li>
+<li>建立流程的能力</li>
+</ul>
+<p>这些才是更稳定的东西。</p>
+<h2 id="我现在对-AI-提效的一个简单判断"><a href="#我现在对-AI-提效的一个简单判断" class="headerlink" title="我现在对 AI 提效的一个简单判断"></a>我现在对 AI 提效的一个简单判断</h2><p>如果一句话总结我现在的看法，大概就是：</p>
+<p><strong>AI 提效不是从“找最强模型”开始，而是从“把问题说清楚、把链路理顺”开始。</strong></p>
+<p>成熟项目里，AI 适合做放大器，提效很容易落地。</p>
+<p>探索项目里，AI 适合做辅助思考工具，但不要期待它替你定义方向。</p>
+<p>如果一个场景里：</p>
+<ul>
+<li>目标不清楚</li>
+<li>链路不稳定</li>
+<li>成功标准不明确</li>
+</ul>
+<p>那这个时候最该补的，往往不是模型能力，而是人的判断和流程设计。</p>
+<p>反过来，如果方向清楚、链路清楚、边界清楚，哪怕不是最强的模型，也经常能做出不错的结果。</p>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-4.0协议，转载请注明出处<br>作者: Mikawa</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2026-04-29</span><i class="fa fa-tag"></i><a class="tag" href="/tags/工程备忘/" title="工程备忘">工程备忘 </a><i class="fa fa-tag"></i><a class="tag" href="/tags/AI实践/" title="AI实践">AI实践 </a><span class="leancloud_visitors"></span><span>大约2455个字, 8分钟11秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0AMikawa%20Blog%20%C2%B7%20AI%20%E6%8F%90%E6%95%88%E7%9A%84%E5%89%8D%E6%8F%90%EF%BC%8C%E4%B8%8D%E6%98%AF%E6%A8%A1%E5%9E%8B%E6%9B%B4%E5%BC%BA%EF%BC%8C%E8%80%8C%E6%98%AF%E6%96%B9%E5%90%91%E6%9B%B4%E6%B8%85%E6%99%B0%0Ahttps://xuh723.github.io/2026/04/29/AI%E6%8F%90%E6%95%88%E7%9A%84%E5%89%8D%E6%8F%90-%E4%B8%8D%E6%98%AF%E6%A8%A1%E5%9E%8B%E6%9B%B4%E5%BC%BA-%E8%80%8C%E6%98%AF%E6%96%B9%E5%90%91%E6%9B%B4%E6%B8%85%E6%99%B0/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="next pagbuttons"><a class="btn" role="navigation" href="/2026/04/23/%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BAAI%E7%9F%A5%E8%AF%86%E7%AE%A1%E7%90%86%E4%BD%93%E7%B3%BB%E7%9A%84%E5%AE%9E%E8%B7%B5%E8%AE%B0%E5%BD%95/" title="搭建个人 AI 知识管理体系的实践记录">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><script>loadComment();</script></div></div></div></div></main-outlet><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>
